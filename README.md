@@ -1,53 +1,20 @@
 # Socket Agent Client
 
-A smart, zero-token client library for Socket Agent APIs that can short-circuit LLMs with learned stubs, offering massive token savings while maintaining flexibility.
+A clean, simple Python client library for Socket Agent APIs. This library makes it easy for LLM agents and applications to interact with Socket Agent-compliant APIs.
 
 ## Features
 
-### 🚀 Zero-Token Routing
-- **Smart routing** that bypasses LLMs when confident
-- **Natural language** API calls: `client("create user alice")`
-- **Confidence-based decisions** with configurable thresholds
-- **Pattern learning** from usage for continuous improvement
-
-### 💾 Multi-Level Caching
-- **Deterministic cache** for exact parameter matches
-- **Semantic cache** (optional) for similar queries
-- **Configurable TTLs** per endpoint
-- **Automatic cache invalidation**
-
-### 📊 Built-in Telemetry
-- **Token savings tracking** - measure your ROI
-- **Latency metrics** (p50, p95)
-- **Hit rates** for cache and short-circuiting
-- **Per-endpoint statistics**
-
-### 🔌 Framework Adapters
-- **MCP (Model Context Protocol)** integration
-- **OpenAI function calling** support
-- **LangChain tools** compatibility
-
-### 🧠 Optional ML Enhancement
-- Support for **tiny models** (ONNX, TFLite, PyTorch)
-- **Confidence boosting** with neural reranking
-- **Slot filling** with sequence models
+- 🚀 **Simple API** - Just point at a Socket Agent API and start making calls
+- 🤖 **LLM-Ready** - Automatic generation of OpenAI/Anthropic tool definitions
+- 🔌 **Extensible** - Middleware system for adding features like caching and telemetry
+- 🔒 **Authentication** - Built-in support for Bearer tokens and API keys
+- 📝 **Type-Safe** - Full type hints and Pydantic models
+- 🎯 **Future-Proof** - Designed with pattern learning and optimization in mind
 
 ## Installation
 
 ```bash
 pip install socket-agent-client
-```
-
-For optional features:
-```bash
-# For semantic caching
-pip install socket-agent-client[semantic]
-
-# For ML model support
-pip install socket-agent-client[ml]
-
-# For all features
-pip install socket-agent-client[all]
 ```
 
 ## Quick Start
@@ -58,194 +25,117 @@ pip install socket-agent-client[all]
 from socket_agent_client import Client
 
 # Initialize client
-client = Client("https://api.example.com")
-client.start()
+client = Client("http://localhost:8001")
 
-# Natural language API calls
-result = client("create a new todo: buy milk")
-print(result.rendered_text)  # Human-readable response
+# List available endpoints
+endpoints = client.list_endpoints()
+print(f"Available endpoints: {endpoints}")
 
-# Check confidence for a query
-endpoint, args, confidence = client.route("list all users")
-print(f"Confidence: {confidence:.2%}")
+# Make an API call
+response = client.call("list_products")
+print(response.data)
 
-# Direct endpoint call when you know what you want
-result = client("create_user", name="alice", email="alice@example.com")
+# Call with parameters
+response = client.call("get_product", id="123")
+print(response.data)
 ```
 
-### Policy Configuration
-
-Control routing behavior with policies:
+### With Authentication
 
 ```python
-from socket_agent_client import create_client
+from socket_agent_client import Client
 
-# Aggressive - maximize direct calls (fewer tokens)
-client = create_client("https://api.example.com", preset="aggressive")
-
-# Conservative - prioritize accuracy (more LLM calls)
-client = create_client("https://api.example.com", preset="conservative")
-
-# Custom policy
-client = create_client(
-    "https://api.example.com",
-    short_circuit_threshold=0.90,  # 90% confidence for direct calls
-    cache_ttl_default=300,          # 5 minute cache
-    enable_semantic_cache=True,     # Enable similarity matching
-)
-```
-
-### Telemetry & Metrics
-
-Track your token savings and performance:
-
-```python
-# After some usage...
-summary = client.telemetry.summary()
-
-print(f"Token Savings: {summary.tokens_saved:,}")
-print(f"Short-circuit rate: {summary.short_circuit_rate:.1%}")
-print(f"Cache hit rate: {summary.cache_hit_rate:.1%}")
-print(f"Avg latency: {summary.avg_latency_ms:.1f}ms")
-
-# Export detailed telemetry
-client.telemetry.export("telemetry.json")
-```
-
-### LLM Fallback
-
-Handle complex queries that need LLM processing:
-
-```python
-def llm_handler(text, descriptor):
-    # Your LLM logic here
-    response = call_your_llm(text, context=descriptor)
-    return response
-
-client.set_llm_handler(llm_handler)
-
-# Low confidence queries automatically fallback to LLM
-result = client("do something complex and unusual")
-```
-
-## Framework Integration
-
-### MCP (Model Context Protocol)
-
-```python
-from socket_agent_client.adapters import create_mcp_tool
-
-tool = create_mcp_tool("https://api.example.com")
-
-# Use in your MCP server
-result = tool("create user alice", context={"auth": "token123"})
-```
-
-### OpenAI Function Calling
-
-```python
-from socket_agent_client.adapters import OpenAIFunctionHandler
-
-handler = OpenAIFunctionHandler("https://api.example.com")
-
-# Get function definition for OpenAI
-function_def = handler.get_function_definition()
-
-# Handle function calls
-result = handler.handle_function_call({"query": "list all products"})
-```
-
-### LangChain
-
-```python
-from socket_agent_client.adapters import create_langchain_tool
-
-tool = create_langchain_tool("https://api.example.com")
-
-# Use in LangChain agents
-result = tool.run("create a new order for customer 123")
-```
-
-## Advanced Features
-
-### Tiny Model Integration
-
-Boost routing confidence with a small ML model:
-
-```python
+# With Bearer token
 client = Client(
     "https://api.example.com",
-    tiny_model="models/intent_classifier.onnx"
+    auth_token="your-bearer-token"
+)
+
+# With API key
+client = Client(
+    "https://api.example.com",
+    api_key="your-api-key"
 )
 ```
 
-### Batch Operations
+### LLM Integration
+
+#### OpenAI
 
 ```python
-from socket_agent_client import BatchExecutor
+from socket_agent_client import Client
+import openai
 
-batch = BatchExecutor(client.executor)
-results = await batch.execute_batch([
-    {"method": "POST", "path": "/users", "json": {"name": "alice"}},
-    {"method": "GET", "path": "/users"},
-    {"method": "DELETE", "path": "/users/123"},
-])
-```
+# Get OpenAI-compatible tools
+client = Client("http://localhost:8001")
+tools = client.get_tools(format="openai")
 
-### Custom Templates
-
-Define how responses are rendered:
-
-```python
-client.renderer.add_template(
-    "create_user",
-    "New user {name} created with ID {id}"
+# Use with OpenAI
+response = openai.ChatCompletion.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "List all products"}],
+    tools=tools,
+    tool_choice="auto"
 )
+
+# Execute the function call
+if response.choices[0].message.tool_calls:
+    tool_call = response.choices[0].message.tool_calls[0]
+    result = client.call(
+        tool_call.function.name,
+        **json.loads(tool_call.function.arguments)
+    )
+    print(result.data)
 ```
 
-## Architecture
+#### Anthropic
 
-```
-User Input (NL text)
-    ↓
-Router (rules + optional model)
-    ↓
-Confidence Score
-    ↓
-┌─────────────────┐
-│  High (≥88%)    │ → Direct API Call → Cache → Response
-│  Medium (70-88%)│ → Confirmation → API Call → Response  
-│  Low (<70%)     │ → LLM Fallback → Response
-└─────────────────┘
+```python
+from socket_agent_client import Client
+
+# Get Anthropic-compatible tools
+client = Client("http://localhost:8001")
+tools = client.get_tools(format="anthropic")
+
+# Use with Anthropic Claude
+# ... (similar to OpenAI example)
 ```
 
-## Performance
+### Using Middleware
 
-Based on real-world usage:
+```python
+from socket_agent_client import Client, TelemetryMiddleware
 
-- **Token savings**: 70-90% reduction in LLM token usage
-- **Latency**: 10-50ms for cached/direct calls vs 1-3s for LLM
-- **Accuracy**: 95%+ routing accuracy with proper thresholds
-- **Cache hit rate**: 40-60% with semantic caching enabled
+client = Client("http://localhost:8001")
 
-## Configuration
+# Add telemetry middleware to track patterns
+telemetry = TelemetryMiddleware(record_patterns=True)
+client.use_middleware(telemetry)
 
-### Environment Variables
+# Make some calls
+client.call("list_products")
+client.call("create_product", name="Widget", price=9.99)
 
-```bash
-SOCKET_AGENT_SHORT_CIRCUIT_THRESHOLD=0.88
-SOCKET_AGENT_CACHE_TTL=300
-SOCKET_AGENT_SEMANTIC_CACHE=true
-SOCKET_AGENT_TELEMETRY=true
+# Get recorded patterns (useful for future optimization)
+patterns = telemetry.get_patterns()
+print(f"Recorded {len(patterns)} API calls")
 ```
 
-### Policy Presets
+### Raw API Calls
 
-- **aggressive**: Maximize token savings (threshold: 0.75)
-- **balanced**: Default balanced approach (threshold: 0.88)
-- **conservative**: Prioritize accuracy (threshold: 0.95)
-- **development**: Full telemetry and learning (threshold: 0.80)
-- **production**: Optimized for production (threshold: 0.90)
+```python
+from socket_agent_client import Client
+
+client = Client("http://localhost:8001")
+
+# Make a raw call without using the descriptor
+response = client.call_raw(
+    method="GET",
+    path="/products",
+    params={"category": "electronics"}
+)
+print(response.data)
+```
 
 ## API Reference
 
@@ -253,36 +143,115 @@ SOCKET_AGENT_TELEMETRY=true
 
 ```python
 class Client:
-    def __init__(service_url: str, **options)
-    def start() -> None
-    def route(text: str) -> Tuple[str, Dict, float]
-    def __call__(text_or_endpoint: str, **kwargs) -> APIResult
-    def set_llm_handler(handler: Callable) -> None
-    def export_stubs(filepath: str) -> None
+    def __init__(
+        base_url: str,
+        auth_token: Optional[str] = None,
+        api_key: Optional[str] = None,
+        timeout: float = 30.0,
+        auto_discover: bool = True
+    )
+    
+    def discover() -> Descriptor
+    def get_descriptor() -> Descriptor
+    def get_tools(format: str = "openai") -> List[Dict]
+    def call(endpoint_name: str, **params) -> APIResponse
+    def call_raw(method: str, path: str, ...) -> APIResponse
+    def use_middleware(middleware: Middleware) -> None
+    def list_endpoints() -> List[str]
 ```
 
-### Types
+### APIResponse
 
 ```python
-@dataclass
-class RouteResult:
-    endpoint: str
-    args: Dict[str, Any]
-    confidence: float
-    decision: DecisionType  # "direct", "confirm", or "fallback"
+class APIResponse:
+    success: bool           # Whether the call succeeded
+    status_code: int       # HTTP status code
+    data: Any             # Response data
+    error: Optional[str]  # Error message if failed
+    headers: Dict[str, str]  # Response headers
+    duration_ms: float    # Request duration
+```
 
-class APIResult:
-    success: bool
-    result: Any
-    rendered_text: Optional[str]
-    tokens_used: int
-    cache_hit: bool
-    duration_ms: float
+### Middleware
+
+```python
+from socket_agent_client import Middleware
+
+class CustomMiddleware(Middleware):
+    def before_request(self, endpoint, params, context):
+        # Modify request before sending
+        return params, context
+    
+    def after_response(self, endpoint, response, context):
+        # Modify response after receiving
+        return response
+    
+    def on_error(self, endpoint, error, context):
+        # Handle errors
+        return error
+```
+
+## Architecture
+
+The client is designed with a clean, extensible architecture:
+
+```
+┌─────────────┐
+│   Client    │ ← Main interface
+└─────┬───────┘
+      │
+      ├── Discovery  → Fetches Socket Agent descriptors
+      ├── Executor   → Handles HTTP requests
+      ├── Tools      → Generates LLM tool definitions
+      └── Middleware → Extensible request/response pipeline
+```
+
+## Future Features
+
+This MVP is designed to be extended with:
+
+- **Pattern Learning** - Learn common API usage patterns to optimize future calls
+- **Smart Caching** - Cache responses based on endpoint characteristics
+- **Request Routing** - Route high-confidence patterns directly without LLM
+- **Token Optimization** - Reduce LLM token usage over time
+
+The middleware system provides clean extension points for these features without breaking the existing API.
+
+## Development
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/socketagent/socket-agent-client.git
+cd socket-agent-client
+
+# Install in development mode
+pip install -e ".[dev]"
+```
+
+### Running Tests
+
+```bash
+pytest tests/
+```
+
+### Code Quality
+
+```bash
+# Format code
+black socket_agent_client/
+
+# Type checking
+mypy socket_agent_client/
+
+# Linting
+ruff socket_agent_client/
 ```
 
 ## Contributing
 
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md).
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
@@ -290,6 +259,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Links
 
-- [Socket Agent Server](https://github.com/systemshift/socket-agent)
-- [Documentation](https://docs.socketagent.ai)
-- [Examples](https://github.com/systemshift/socket-agent/tree/main/examples)
+- [Socket Agent Specification](https://github.com/systemshift/socket-agent)
+- [Examples](examples/)
+- [API Documentation](https://docs.socketagent.io)
