@@ -1,6 +1,6 @@
 """Data models for Socket Agent client."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, HttpUrl
 
 
@@ -46,7 +46,7 @@ class Descriptor(BaseModel):
     endpoints: List[Endpoint] = Field(..., description="List of API endpoints")
     auth: Optional[AuthConfig] = Field(default_factory=lambda: AuthConfig())
     schemas: Optional[Dict[str, Any]] = Field(None, description="Reusable schemas")
-    examples: Optional[List[Dict[str, Any]]] = Field(None, description="Usage examples")
+    examples: Optional[List[Union[str, Dict[str, Any]]]] = Field(None, description="Usage examples")
     specVersion: str = Field(default="2025-01-01", description="Socket Agent spec version")
     
     class Config:
