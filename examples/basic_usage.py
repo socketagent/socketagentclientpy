@@ -6,7 +6,7 @@ This example demonstrates how to use the client with a Socket Agent API.
 """
 
 import json
-from socket_agent_client import Client, TelemetryMiddleware
+from socket_agent_client import Client
 
 
 def main():
@@ -40,11 +40,8 @@ def main():
         print("\nExample tool definition:")
         print(json.dumps(tools[0], indent=2))
     
-    # Add telemetry middleware
-    print("\n=== Using Middleware ===")
-    telemetry = TelemetryMiddleware(record_patterns=True)
-    client.use_middleware(telemetry)
-    print("Added telemetry middleware for pattern recording")
+    # Ready to make API calls
+    print("\n=== Ready for API Calls ===")
     
     # Make some API calls (adjust to match your API)
     print("\n=== Making API Calls ===")
@@ -74,13 +71,8 @@ def main():
     except Exception as e:
         print(f"   Note: Adjust endpoint names to match your API. Error: {e}")
     
-    # Show recorded patterns
-    print("\n=== Telemetry Patterns ===")
-    patterns = telemetry.get_patterns()
-    print(f"Recorded {len(patterns)} API calls")
-    for pattern in patterns:
-        print(f"  - {pattern['method']} {pattern['endpoint']}: "
-              f"{pattern.get('duration_ms', 0):.2f}ms")
+    # Summary
+    print("\n=== API Calls Complete ===")
     
     # Raw API call example
     print("\n=== Raw API Call ===")
@@ -99,9 +91,8 @@ def main():
     print("  ✓ Connecting to a Socket Agent API")
     print("  ✓ Discovering available endpoints")
     print("  ✓ Generating LLM tool definitions")
-    print("  ✓ Using middleware for telemetry")
     print("  ✓ Making API calls")
-    print("  ✓ Recording patterns for future optimization")
+    print("  ✓ Raw API access")
 
 
 if __name__ == "__main__":

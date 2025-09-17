@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 from .discovery import fetch_descriptor
 from .exceptions import SocketAgentError, ValidationError
 from .executor import Executor
-from .middleware.base import Middleware
 from .models import APIResponse, Descriptor, Endpoint
 from .tools import generate_tools
 
@@ -45,7 +44,6 @@ class Client:
         # Core components
         self.descriptor: Optional[Descriptor] = None
         self.executor: Optional[Executor] = None
-        self.middlewares: List[Middleware] = []
         
         # Endpoint lookup cache
         self._endpoint_cache: Dict[str, Endpoint] = {}
@@ -141,41 +139,8 @@ class Client:
         if not endpoint:
             raise ValidationError(f"Endpoint not found: {endpoint_name}")
         
-        # Apply middleware before request
-        context = {}
-        for middleware in self.middlewares:
-            modified_params, modified_context = middleware.before_request(
-                endpoint, params, context
-            )
-            if modified_params is not None:
-                params = modified_params
-            if modified_context is not None:
-                context = modified_context
-        
-        # Execute request
-        try:
-            response = self.executor.execute(endpoint, params)
-        except Exception as e:
-            # Let middleware handle errors
-            for middleware in self.middlewares:
-                e = middleware.on_error(endpoint, e, context)
-                if e is None:
-                    break
-            if e:
-                raise e
-            # Error was suppressed
-            response = APIResponse(
-                success=False,
-                status_code=0,
-                data=None,
-                error="Error suppressed by middleware"
-            )
-        
-        # Apply middleware after response
-        for middleware in self.middlewares:
-            response = middleware.after_response(endpoint, response, context)
-        
-        return response
+        # Execute request directly
+        return self.executor.execute(endpoint, params)
     
     def call_raw(
         self,
@@ -209,27 +174,6 @@ class Client:
         
         return self.executor.call(method, path, params, json_data, headers)
     
-    def use_middleware(self, middleware: Middleware) -> None:
-        """
-        Add middleware to the client.
-        
-        Middleware can intercept and modify requests/responses,
-        enabling features like caching, telemetry, and pattern learning.
-        
-        Args:
-            middleware: Middleware instance to add
-        """
-        self.middlewares.append(middleware)
-    
-    def remove_middleware(self, middleware: Middleware) -> None:
-        """
-        Remove middleware from the client.
-        
-        Args:
-            middleware: Middleware instance to remove
-        """
-        if middleware in self.middlewares:
-            self.middlewares.remove(middleware)
     
     def list_endpoints(self) -> List[str]:
         """

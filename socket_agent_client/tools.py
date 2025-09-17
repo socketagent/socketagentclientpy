@@ -39,46 +39,6 @@ class ToolGenerator:
         
         return tools
     
-    def generate_anthropic_tools(self) -> List[Dict[str, Any]]:
-        """
-        Generate Anthropic-compatible tool definitions.
-        
-        Returns:
-            List of Anthropic tool definitions
-        """
-        tools = []
-        
-        for endpoint in self.descriptor.endpoints:
-            tool = {
-                "name": self._generate_function_name(endpoint),
-                "description": endpoint.summary,
-                "input_schema": self._generate_anthropic_schema(endpoint),
-            }
-            tools.append(tool)
-        
-        return tools
-    
-    def generate_generic_tools(self) -> List[Dict[str, Any]]:
-        """
-        Generate generic tool definitions.
-        
-        Returns:
-            List of generic tool definitions
-        """
-        tools = []
-        
-        for endpoint in self.descriptor.endpoints:
-            tool = {
-                "name": self._generate_function_name(endpoint),
-                "description": endpoint.summary,
-                "method": endpoint.method,
-                "path": endpoint.path,
-                "parameters": self._extract_parameters(endpoint),
-                "request_body": self._extract_request_body(endpoint),
-            }
-            tools.append(tool)
-        
-        return tools
     
     def _generate_function_name(self, endpoint: Endpoint) -> str:
         """
@@ -176,18 +136,6 @@ class ToolGenerator:
             "required": required
         }
     
-    def _generate_anthropic_schema(self, endpoint: Endpoint) -> Dict[str, Any]:
-        """
-        Generate Anthropic-style input schema.
-        
-        Args:
-            endpoint: Endpoint to generate schema for
-            
-        Returns:
-            Anthropic input schema
-        """
-        # Similar to OpenAI but with slightly different format
-        return self._generate_openai_parameters(endpoint)
     
     def _extract_path_parameters(self, path: str) -> List[str]:
         """
@@ -259,25 +207,20 @@ class ToolGenerator:
 
 def generate_tools(descriptor: Descriptor, format: str = "openai") -> List[Dict[str, Any]]:
     """
-    Generate LLM tools from a Socket Agent descriptor.
-    
+    Generate OpenAI-compatible tools from a Socket Agent descriptor.
+
     Args:
         descriptor: Socket Agent API descriptor
-        format: Tool format ("openai", "anthropic", or "generic")
-        
+        format: Tool format (only "openai" supported)
+
     Returns:
-        List of tool definitions
-        
+        List of OpenAI tool definitions
+
     Raises:
-        ValueError: If format is not supported
+        ValueError: If format is not "openai"
     """
+    if format != "openai":
+        raise ValueError(f"Only 'openai' format is supported, got: {format}")
+
     generator = ToolGenerator(descriptor)
-    
-    if format == "openai":
-        return generator.generate_openai_tools()
-    elif format == "anthropic":
-        return generator.generate_anthropic_tools()
-    elif format == "generic":
-        return generator.generate_generic_tools()
-    else:
-        raise ValueError(f"Unsupported format: {format}")
+    return generator.generate_openai_tools()

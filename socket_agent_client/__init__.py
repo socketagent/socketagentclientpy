@@ -1,11 +1,20 @@
 """
-Socket Agent Client - A clean, simple client for Socket Agent APIs.
+Socket Agent Client - Natural language interface for Socket Agent APIs.
 
-This library provides an easy way to interact with Socket Agent APIs,
-with built-in support for LLM tool generation and extensible middleware
-for future features like caching and pattern learning.
+This library provides a simple way to interact with Socket Agent APIs using
+natural language queries processed by LLMs. Just ask questions and get results!
+
+Basic usage:
+    from socket_agent_client import SocketAgent
+
+    agent = SocketAgent("http://localhost:8001")
+    result = agent.ask("search for cheese")
 """
 
+# Main natural language interface (primary)
+from .agent import SocketAgent
+
+# Legacy programmatic interface (for advanced use)
 from .client import Client
 from .discovery import fetch_descriptor
 from .exceptions import (
@@ -17,27 +26,23 @@ from .exceptions import (
     TimeoutError,
     ValidationError,
 )
-from .middleware import CacheMiddleware, Middleware, TelemetryMiddleware
 from .models import APIResponse, Descriptor, Endpoint
 from .tools import generate_tools
 
 __version__ = "0.1.0"
 
 __all__ = [
-    # Main client
+    # Main natural language interface
+    "SocketAgent",
+
+    # Legacy programmatic interface (for advanced use)
     "Client",
-    # Discovery
     "fetch_descriptor",
-    # Models
     "Descriptor",
     "Endpoint",
     "APIResponse",
-    # Tools
     "generate_tools",
-    # Middleware
-    "Middleware",
-    "TelemetryMiddleware",
-    "CacheMiddleware",
+
     # Exceptions
     "SocketAgentError",
     "DiscoveryError",

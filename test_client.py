@@ -7,7 +7,7 @@ This script tests the basic functionality of the new client implementation.
 
 import json
 import sys
-from socket_agent_client import Client, TelemetryMiddleware, DiscoveryError
+from socket_agent_client import Client, DiscoveryError
 
 
 def test_client():
@@ -65,33 +65,23 @@ def test_client():
         openai_tools = client.get_tools(format="openai")
         print(f"✓ Generated {len(openai_tools)} OpenAI tools")
         
-        anthropic_tools = client.get_tools(format="anthropic")
-        print(f"✓ Generated {len(anthropic_tools)} Anthropic tools")
-        
         if openai_tools:
             print("\nExample OpenAI tool:")
             print(json.dumps(openai_tools[0], indent=2)[:300] + "...")
     except Exception as e:
         print(f"✗ Failed to generate tools: {e}")
     
-    # Test 5: Middleware
-    print("\nTest 5: Testing middleware...")
+    # Test 5: API Call
+    print("\nTest 5: Testing API call...")
     try:
-        telemetry = TelemetryMiddleware(record_patterns=True)
-        client.use_middleware(telemetry)
-        print("✓ Added telemetry middleware")
-        
         # Make a test call
         try:
             response = client.call("list_products")
             print(f"✓ API call succeeded: {response.status_code}")
         except Exception as e:
             print(f"  Note: API call failed (expected if no products endpoint): {e}")
-        
-        patterns = telemetry.get_patterns()
-        print(f"✓ Recorded {len(patterns)} patterns")
     except Exception as e:
-        print(f"✗ Middleware test failed: {e}")
+        print(f"✗ API call test failed: {e}")
     
     print("\n=== All tests completed ===")
     return True
