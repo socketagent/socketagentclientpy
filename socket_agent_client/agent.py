@@ -101,8 +101,23 @@ class SocketAgent:
                     result = self._execute_tool_call(tool_call)
                     tool_results.append(result)
 
-                # Add tool results to conversation and get final response
-                messages.append({"role": "assistant", "content": response.content or ""})
+                # Add assistant message with tool calls
+                messages.append({
+                    "role": "assistant",
+                    "content": response.content or "",
+                    "tool_calls": [
+                        {
+                            "id": tool_call.id,
+                            "type": "function",
+                            "function": {
+                                "name": tool_call.function.name,
+                                "arguments": tool_call.function.arguments
+                            }
+                        } for tool_call in response.tool_calls
+                    ]
+                })
+
+                # Add tool results
                 for i, tool_call in enumerate(response.tool_calls):
                     messages.append({
                         "role": "tool",

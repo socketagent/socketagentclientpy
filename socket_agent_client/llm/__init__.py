@@ -2,5 +2,6 @@
 
 from .base import LLMProvider
 from .openai import OpenAIProvider
+from .ollama import OllamaProvider
 
-__all__ = ["LLMProvider", "OpenAIProvider"]
+__all__ = ["LLMProvider", "OpenAIProvider", "OllamaProvider"]
