@@ -8,8 +8,8 @@ the Socket Agent APIs.
 
 import os
 import sys
-from socket_agent_client import SocketAgent
-from socket_agent_client.exceptions import SocketAgentError
+from socketagentlib import SocketAgent
+from socketagentlib.exceptions import SocketAgentError
 
 
 def test_grocery_api():
@@ -74,7 +74,7 @@ def test_api_info():
 
     try:
         print("Testing basic client functionality...")
-        from socket_agent_client import Client
+        from socketagentlib import Client
 
         client = Client("http://localhost:8001")
         descriptor = client.get_descriptor()

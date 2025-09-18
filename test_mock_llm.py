@@ -6,8 +6,8 @@ This demonstrates the complete flow without requiring an actual LLM API key.
 """
 
 import json
-from socket_agent_client import SocketAgent
-from socket_agent_client.llm.base import LLMProvider
+from socketagentlib import SocketAgent
+from socketagentlib.llm.base import LLMProvider
 
 
 class MockLLMProvider(LLMProvider):

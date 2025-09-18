@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "socket-agent-client"
+name = "socketagentlib"
 version = "0.1.0"
 description = "Clean, simple client library for Socket Agent APIs"
 readme = "README.md"
@@ -50,7 +50,7 @@ Issues = "https://github.com/socketagent/socket-agent-client/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["socket_agent_client*"]
+include = ["socketagentlib*"]
 exclude = ["tests*", "examples*"]
 
 [tool.pytest.ini_options]

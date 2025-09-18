@@ -7,7 +7,7 @@ This script tests the basic functionality of the new client implementation.
 
 import json
 import sys
-from socket_agent_client import Client, DiscoveryError
+from socketagentlib import Client, DiscoveryError
 
 
 def test_client():
@@ -89,7 +89,7 @@ def test_client():
 
 def test_with_mock():
     """Test with mock data when no server is available."""
-    from socket_agent_client.models import Descriptor, Endpoint
+    from socketagentlib.models import Descriptor, Endpoint
     
     print("\nCreating mock descriptor for testing...")
     
@@ -124,7 +124,7 @@ def test_with_mock():
     print(f"✓ Created mock descriptor with {len(mock_descriptor.endpoints)} endpoints")
     
     # Test tool generation with mock
-    from socket_agent_client.tools import generate_tools
+    from socketagentlib.tools import generate_tools
     
     print("\nGenerating tools from mock descriptor...")
     tools = generate_tools(mock_descriptor, format="openai")

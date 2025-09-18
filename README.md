@@ -14,7 +14,7 @@ A clean, simple Python client library for Socket Agent APIs. This library makes 
 ## Installation
 
 ```bash
-pip install socket-agent-client
+pip install socketagentlib
 ```
 
 ## Quick Start
@@ -22,7 +22,7 @@ pip install socket-agent-client
 ### Basic Usage
 
 ```python
-from socket_agent_client import Client
+from socketagentlib import Client
 
 # Initialize client
 client = Client("http://localhost:8001")
@@ -43,7 +43,7 @@ print(response.data)
 ### With Authentication
 
 ```python
-from socket_agent_client import Client
+from socketagentlib import Client
 
 # With Bearer token
 client = Client(
@@ -63,7 +63,7 @@ client = Client(
 #### OpenAI
 
 ```python
-from socket_agent_client import Client
+from socketagentlib import Client
 import openai
 
 # Get OpenAI-compatible tools
@@ -91,7 +91,7 @@ if response.choices[0].message.tool_calls:
 #### Anthropic
 
 ```python
-from socket_agent_client import Client
+from socketagentlib import Client
 
 # Get Anthropic-compatible tools
 client = Client("http://localhost:8001")
@@ -104,7 +104,7 @@ tools = client.get_tools(format="anthropic")
 ### Using Middleware
 
 ```python
-from socket_agent_client import Client, TelemetryMiddleware
+from socketagentlib import Client, TelemetryMiddleware
 
 client = Client("http://localhost:8001")
 
@@ -124,7 +124,7 @@ print(f"Recorded {len(patterns)} API calls")
 ### Raw API Calls
 
 ```python
-from socket_agent_client import Client
+from socketagentlib import Client
 
 client = Client("http://localhost:8001")
 
@@ -175,7 +175,7 @@ class APIResponse:
 ### Middleware
 
 ```python
-from socket_agent_client import Middleware
+from socketagentlib import Middleware
 
 class CustomMiddleware(Middleware):
     def before_request(self, endpoint, params, context):

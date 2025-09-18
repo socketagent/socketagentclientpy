@@ -6,7 +6,7 @@ This example demonstrates how to use the client with a Socket Agent API.
 """
 
 import json
-from socket_agent_client import Client
+from socketagentlib import Client
 
 
 def main():
