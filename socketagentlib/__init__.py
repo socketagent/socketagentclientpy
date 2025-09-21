@@ -26,6 +26,7 @@ from .exceptions import (
     TimeoutError,
     ValidationError,
 )
+from .identity import IdentityClient, TokenManager
 from .models import APIResponse, Descriptor, Endpoint
 from .tools import generate_tools
 
@@ -42,6 +43,10 @@ __all__ = [
     "Endpoint",
     "APIResponse",
     "generate_tools",
+
+    # Authentication components
+    "IdentityClient",
+    "TokenManager",
 
     # Exceptions
     "SocketAgentError",

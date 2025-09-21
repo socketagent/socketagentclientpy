@@ -3,8 +3,9 @@
 from typing import Any, Dict, List, Optional
 
 from .discovery import fetch_descriptor
-from .exceptions import SocketAgentError, ValidationError
+from .exceptions import AuthenticationError, SocketAgentError, ValidationError
 from .executor import Executor
+from .identity import IdentityClient
 from .models import APIResponse, Descriptor, Endpoint
 from .tools import generate_tools
 
@@ -23,16 +24,18 @@ class Client:
         base_url: str,
         auth_token: Optional[str] = None,
         api_key: Optional[str] = None,
+        identity_service_url: Optional[str] = None,
         timeout: float = 30.0,
         auto_discover: bool = True,
     ):
         """
         Initialize Socket Agent client.
-        
+
         Args:
             base_url: Base URL of the Socket Agent API
             auth_token: Optional bearer token for authentication
             api_key: Optional API key for authentication
+            identity_service_url: Optional socketagent.id service URL for authentication
             timeout: Request timeout in seconds
             auto_discover: Whether to fetch descriptor on initialization
         """
@@ -40,14 +43,20 @@ class Client:
         self.auth_token = auth_token
         self.api_key = api_key
         self.timeout = timeout
-        
+        self.identity_service_url = identity_service_url
+
         # Core components
         self.descriptor: Optional[Descriptor] = None
         self.executor: Optional[Executor] = None
-        
+        self.identity_client: Optional[IdentityClient] = None
+
         # Endpoint lookup cache
         self._endpoint_cache: Dict[str, Endpoint] = {}
-        
+
+        # Initialize identity client if URL provided
+        if identity_service_url:
+            self.identity_client = IdentityClient(identity_service_url, timeout=timeout)
+
         # Auto-discover if requested
         if auto_discover:
             self.discover()
@@ -66,10 +75,27 @@ class Client:
         
         # Initialize executor with discovered base URL
         base_url = str(self.descriptor.baseUrl) if self.descriptor.baseUrl else self.base_url
+
+        # Check if identity service URL is in descriptor
+        if (self.descriptor.auth and
+            self.descriptor.auth.identity_service_url and
+            not self.identity_client):
+            self.identity_client = IdentityClient(
+                self.descriptor.auth.identity_service_url,
+                timeout=self.timeout
+            )
+
+        # Get auth token from identity client if available
+        auth_token = self.auth_token
+        if self.identity_client and self.identity_client.is_authenticated():
+            auth_headers = self.identity_client.get_auth_headers()
+            if auth_headers and "Authorization" in auth_headers:
+                auth_token = auth_headers["Authorization"].replace("Bearer ", "")
+
         self.executor = Executor(
             base_url=base_url,
             timeout=self.timeout,
-            auth_token=self.auth_token,
+            auth_token=auth_token,
             api_key=self.api_key,
         )
         
@@ -173,8 +199,74 @@ class Client:
             )
         
         return self.executor.call(method, path, params, json_data, headers)
-    
-    
+
+    async def authenticate(self, username: str, password: str) -> None:
+        """
+        Authenticate with socketagent.id using username and password.
+
+        Args:
+            username: Username
+            password: Password
+
+        Raises:
+            AuthenticationError: If authentication fails
+            SocketAgentError: If identity client not available
+        """
+        if not self.identity_client:
+            raise SocketAgentError("No identity service configured")
+
+        await self.identity_client.login(username, password)
+
+        # Update executor with new token
+        if self.executor:
+            auth_headers = self.identity_client.get_auth_headers()
+            if auth_headers and "Authorization" in auth_headers:
+                auth_token = auth_headers["Authorization"].replace("Bearer ", "")
+                self.executor.auth_token = auth_token
+
+    async def logout(self) -> None:
+        """
+        Logout and clear authentication tokens.
+        """
+        if self.identity_client:
+            await self.identity_client.logout()
+
+        # Clear token from executor
+        if self.executor:
+            self.executor.auth_token = None
+
+    def is_authenticated(self) -> bool:
+        """
+        Check if client is currently authenticated.
+
+        Returns:
+            True if authenticated, False otherwise
+        """
+        if self.identity_client:
+            return self.identity_client.is_authenticated()
+        return bool(self.auth_token)
+
+    async def ensure_authenticated(self) -> None:
+        """
+        Ensure client is authenticated, refreshing token if necessary.
+
+        Raises:
+            AuthenticationError: If no valid authentication available
+        """
+        if self.identity_client:
+            try:
+                await self.identity_client.ensure_valid_token()
+                # Update executor with refreshed token
+                if self.executor:
+                    auth_headers = self.identity_client.get_auth_headers()
+                    if auth_headers and "Authorization" in auth_headers:
+                        auth_token = auth_headers["Authorization"].replace("Bearer ", "")
+                        self.executor.auth_token = auth_token
+            except AuthenticationError:
+                raise AuthenticationError("Authentication required. Please call authenticate() first.")
+        elif not self.auth_token:
+            raise AuthenticationError("No authentication configured")
+
     def list_endpoints(self) -> List[str]:
         """
         List all available endpoint names.
